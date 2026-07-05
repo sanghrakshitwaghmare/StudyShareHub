@@ -17,6 +17,7 @@ const NoticeBoard = () => {
     const [postError, setPostError] = useState("");
     const [postSuccess, setPostSuccess] = useState("");
     const [posting, setPosting] = useState(false);
+    const [sentEmailPreview, setSentEmailPreview] = useState(null);
 
     // Fetch notices
     const fetchNotices = async () => {
@@ -70,6 +71,9 @@ const NoticeBoard = () => {
                 setPostTitle("");
                 setPostContent("");
                 setPostFile(null);
+                if (res.data.emailPreviewUrl) {
+                    setSentEmailPreview(res.data.emailPreviewUrl);
+                }
                 
                 // Refresh notices
                 fetchNotices();
@@ -135,6 +139,37 @@ const NoticeBoard = () => {
                     </button>
                 )}
             </div>
+
+            {/* Notice Broadcast Email Dispatched Notification Banner */}
+            {sentEmailPreview && (
+                <div className="glass-card animate-fade-in" style={{
+                    background: "rgba(20, 184, 166, 0.12)",
+                    border: "1px solid var(--teal)",
+                    padding: "1rem",
+                    borderRadius: "var(--radius-md)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "1.5rem",
+                    maxWidth: "900px"
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", textAlign: "left" }}>
+                        <span role="img" aria-label="email" style={{ fontSize: "1.35rem" }}>📧</span>
+                        <div style={{ fontSize: "0.9rem" }}>
+                            <strong>Student Broadcast Email Dispatched!</strong> You can preview the sent HTML notice broadcast at:{" "}
+                            <a href={sentEmailPreview} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)", fontWeight: 700, textDecoration: "underline" }}>
+                                Ethereal Web Reader Link
+                            </a>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setSentEmailPreview(null)}
+                        style={{ border: "none", background: "transparent", color: "var(--text-secondary)", cursor: "pointer", display: "flex" }}
+                    >
+                        <Icons.Close size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* Notice Timeline */}
             {loading ? (

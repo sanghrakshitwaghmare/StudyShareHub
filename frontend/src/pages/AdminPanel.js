@@ -16,6 +16,7 @@ const AdminPanel = () => {
 
     // Modal state for full-screen ID card preview
     const [previewUser, setPreviewUser] = useState(null);
+    const [sentEmailPreview, setSentEmailPreview] = useState(null);
 
     // Fetch tab data
     const fetchData = async () => {
@@ -54,6 +55,9 @@ const AdminPanel = () => {
             if (res.data.success) {
                 setPendingUsers(prev => prev.filter(u => u._id !== userId));
                 setPreviewUser(null);
+                if (res.data.emailPreviewUrl) {
+                    setSentEmailPreview(res.data.emailPreviewUrl);
+                }
             }
         } catch (error) {
             console.error("Verify student error:", error);
@@ -112,6 +116,36 @@ const AdminPanel = () => {
                 <h1 style={{ fontSize: "2rem", fontWeight: 800 }}>Admin Desk</h1>
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.95rem" }}>Verify college ID cards, approve submitted notes, and view statistics</p>
             </div>
+
+            {/* Verification Email Dispatched Notification Banner */}
+            {sentEmailPreview && (
+                <div className="glass-card animate-fade-in" style={{
+                    background: "rgba(20, 184, 166, 0.12)",
+                    border: "1px solid var(--teal)",
+                    padding: "1rem",
+                    borderRadius: "var(--radius-md)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "1.5rem"
+                }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", textAlign: "left" }}>
+                        <span role="img" aria-label="email" style={{ fontSize: "1.35rem" }}>📧</span>
+                        <div style={{ fontSize: "0.9rem" }}>
+                            <strong>Demo Verification Email Dispatched!</strong> You can preview the sent HTML message at:{" "}
+                            <a href={sentEmailPreview} target="_blank" rel="noopener noreferrer" style={{ color: "var(--teal)", fontWeight: 700, textDecoration: "underline" }}>
+                                Ethereal Web Reader Link
+                            </a>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setSentEmailPreview(null)}
+                        style={{ border: "none", background: "transparent", color: "var(--text-secondary)", cursor: "pointer", display: "flex" }}
+                    >
+                        <Icons.Close size={16} />
+                    </button>
+                </div>
+            )}
 
             {/* Admin Tabs */}
             <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid var(--border-glass)", paddingBottom: "1rem", marginBottom: "2rem" }}>

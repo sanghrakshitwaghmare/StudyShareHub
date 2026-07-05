@@ -4,7 +4,9 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const Notice = require("../models/Notice");
+const User = require("../models/User");
 const { protect, isApproved, authorizeRoles } = require("../middleware/auth");
+const sendEmail = require("../utils/sendEmail");
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, "../uploads/notices");
@@ -52,10 +54,51 @@ router.post("/", protect, isApproved, authorizeRoles("faculty", "admin"), (req, 
                 postedBy: req.user._id
             });
 
+            // Broadcast Email to all approved students
+            let emailPreviewUrl = null;
+            try {
+                const students = await User.find({ role: "student", status: "approved" });
+                if (students.length > 0) {
+                    const emails = students.map(s => s.email);
+                    
+                    const htmlContent = `<div style="font-family: Arial, sans-serif; background-color: #f3f4f6; padding: 20px; color: #1f2937;">
+                        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+                            <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 30px; text-align: center; color: white;">
+                                <span style="background-color: rgba(255, 255, 255, 0.2); padding: 4px 12px; border-radius: 20px; font-size: 11px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.05em;">${category} Notice</span>
+                                <h1 style="margin: 10px 0 0 0; font-size: 22px; font-weight: 800;">${title}</h1>
+                            </div>
+                            <div style="padding: 30px; line-height: 1.6;">
+                                <p>Hello Student,</p>
+                                <p>An official notice has been posted on the IT Department Notice Board:</p>
+                                <div style="background-color: #f9fafb; border-left: 4px solid #6366f1; padding: 15px; margin: 20px 0; font-style: italic; white-space: pre-wrap; color: #4b5563; border-radius: 4px;">
+                                    ${content}
+                                </div>
+                                <p style="font-size: 14px; color: #6b7280;">Posted by: ${req.user.name} (${req.user.role})<br>Date: ${new Date().toLocaleDateString()}</p>
+                                <div style="text-align: center; margin: 30px 0 10px 0;">
+                                    <a href="http://localhost:3000/login" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);">View Notice Board</a>
+                                </div>
+                            </div>
+                            <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+                                This is an automated notice broadcast from StudyShareHub IT Portal.
+                            </div>
+                        </div>
+                    </div>`;
+
+                    emailPreviewUrl = await sendEmail({
+                        email: emails.join(", "),
+                        subject: `[Notice Board] New Announcement: ${title}`,
+                        html: htmlContent
+                    });
+                }
+            } catch (mailError) {
+                console.error("Notice broadcast email failed:", mailError);
+            }
+
             res.status(201).json({
                 success: true,
                 message: "Notice posted successfully!",
-                notice
+                notice,
+                emailPreviewUrl
             });
         } catch (error) {
             console.error("Post Notice Error:", error);
